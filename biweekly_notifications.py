@@ -41,24 +41,6 @@ class Staff(object):
                     return staff
         else:
             print('error: needs to be list or dict')
-
-    # @staticmethod
-    # def find_lastdict(object_dict,lname):
-    #     for staff in object_dict:
-    #         if staff == lname:
-    #             return staff
-    # @staticmethod
-    # def find_fullname(object_list,full_name):
-    #     full_name = full_name.replace(' ','')
-    #     full_name_list = full_name.split(',')
-    #     fname = full_name_list[0]
-    #     lname = full_name_list[1]
-    #     for staff in object_list:
-    #         print(staff)
-    #         if staff.last_name == lname:
-    #             if staff.first_name == fname:
-    #                 return staff
-        
     
 class Resident(Staff):
     """Creates an abstract base class
@@ -124,25 +106,6 @@ def sendGmail(server,to):
     message = 'Subject: {}\n{}'.format(subject,body)
     server.sendmail('Robert.M.Handzel@gmail.com',to,message)
 
-
-def check_if_notified(path,file):
-    df = pd.read_excel(path+file)
-    print(df.head())
-
-    today = datetime.date.today()
-    print(today)
-
-
-    # df_pgy2 = pd.read_excel(path+file,sheetname='PGY 2')
-    # # df_pgy2 = df_pgy2.transpose()
-    # df_pgy5 = pd.read_excel(path+file,sheetname='PGY 4 & 5')
-
-
-
-    # for col in df_pgy5.columns:
-    #   df_row = df_pgy5.loc[df_pgy5[col]=='Endocrine']
-
-
 def get_pgy1(path,file,sheet,send):
     df = pd.read_excel(path+file, sheetname=sheet,skiprows=3)
     df = df[df['PGY 1 Interns'].notnull()]
@@ -157,13 +120,8 @@ def get_pgy1(path,file,sheet,send):
             start_date = datetime.strptime(date_list[0],'%m/%d/%y')
             end_date = datetime.strptime(date_list[1],'%m/%d/%y')
 
-            # print('')
-            # print('start date: {}'.format(start_date))
-            # print('end date: {}'.format(end_date))
-
             if start_date-timedelta(days=1) <= datetime.now() <= end_date:
                 current_col = cols
-                # print(datetime.now()+timedelta(days=x_days))
                 break
 
     df_current = df[['PGY 1 Interns',current_col]]
@@ -183,19 +141,16 @@ def get_pgy1(path,file,sheet,send):
         elif send == 'linux':
             print('sending out gmail emails...')
             server = createGmailServer()
-            sendGmail(server=server,to='handzelrm@upmc.edu'):            
+            sendGmail(server=server,to='handzelrm@upmc.edu')           
         else:
-            print('no emails sent')
+            print('\t\tno emails sent')
     else:
         print('More than one match')
 
 def get_pgy2(path,file,sheet,send):
     df = pd.read_excel(path+file,sheetname=sheet,skiprows=3)
-    # df = df.iloc[:21,:]
-    # df = df[df.dropna()]
     df = df[df.NAME.notnull()]
     df = df.drop(df.columns[[1,2]],axis=1)
-    # print(df)
     for cols in df.columns:
         if cols not in ['NAME','Unnamed: 14']:
             col_list = cols.split(' ')
@@ -203,10 +158,6 @@ def get_pgy2(path,file,sheet,send):
             date_list = date_span.split('-')
             start_date = datetime.strptime(date_list[0],'%m/%d/%y')
             end_date = datetime.strptime(date_list[1],'%m/%d/%y')
-
-            # print('')
-            # print('start date: {}'.format(start_date))
-            # print('end date: {}'.format(end_date))
 
             if start_date-timedelta(days=1) <= datetime.now() <= end_date:
                 current_col = cols
@@ -229,9 +180,9 @@ def get_pgy2(path,file,sheet,send):
         elif send == 'linux':
             print('sending out gmail emails...')
             server = createGmailServer()
-            sendGmail(server=server,to='handzelrm@upmc.edu'):            
+            sendGmail(server=server,to='handzelrm@upmc.edu')         
         else:
-            print('no emails sent')
+            print('\t\tno emails sent')
     else:
         print('More than one match')
 
@@ -246,10 +197,6 @@ def get_pgy5(path,file,sheet,send):
             date_list = date_span.split('-')
             start_date = datetime.strptime(date_list[0],'%m/%d/%y')
             end_date = datetime.strptime(date_list[1],'%m/%d/%y')
-
-            # print('')
-            # print('start date: {}'.format(start_date))
-            # print('end date: {}'.format(end_date))
 
             if start_date-timedelta(days=1) <= datetime.now() <= end_date:
                 current_col = cols
@@ -272,9 +219,9 @@ def get_pgy5(path,file,sheet,send):
         elif send == 'linux':
             print('sending out gmail emails...')
             server = createGmailServer()
-            sendGmail(server=server,to='handzelrm@upmc.edu'):            
+            sendGmail(server=server,to='handzelrm@upmc.edu')         
         else:
-            print('no emails sent')
+            print('\t\tno emails sent')
     else:
         print('More than one match')
 
