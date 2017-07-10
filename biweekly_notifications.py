@@ -5,6 +5,7 @@ from datetime import datetime
 from datetime import timedelta
 #import win32com.client as win32 #used to use local outlook program to send email
 import smtplib #used to send emails from gmail
+import os
 
 class Staff(object):
     """Creates an abstract base class
@@ -67,18 +68,24 @@ class Resident(Staff):
         self.number_of_calls = number_of_calls
 
 def load_and_pickle_res(path,file,sheet):
+    if not os.path.isfile(path+'sent_last_week.pickle'):
+        print('no file')
+        sent_last_week = False
+        with open(path+'sent_last_week.pickle','wb') as f:
+            pickle.dump(sent_last_week,f)		
+	
     res_dict = {}
     df = pd.read_excel(path+file,sheetname=sheet)
     df = df[['Resident Names (Last, First)','Resident Institutional Email']]
     df = df.dropna()
-    
+	
     for row in df.iterrows():
         full_name = row[1][0].split(', ')
         fname = full_name[1].strip()
         lname = full_name[0].strip()
         email = row[1][1]
         res_dict[lname] = Resident(fname,lname,email)
-
+        
     with open(path+'res_dict.pickle','wb') as f:
         pickle.dump(res_dict,f)
 
@@ -105,6 +112,13 @@ def sendGmail(server,to):
     body = 'Hi,\n\nThis is a reminder to ask the attendings to fill out surgical evaluations after thyroidectomies and parathyroidectomies. Here are the links to the evals for your reference:\n\nThyroid: https://docs.google.com/forms/d/e/1FAIpQLScIJrSzFypVAivYRElGbVBssIpYwQAgzyCP9C4Bk5vOhgIBIw/viewform\n\nParathyroid: https://docs.google.com/forms/d/e/1FAIpQLSeZA7J6q5AneCX-8suob7omhPMRes82nIi3aA1IanKmKoYURg/viewform\n\nIf you need access to your evaluations please send me a gmail address that I can send them to. Let me know if you have any questions or issues\n\nThanks,\nRob' #adds body
     message = 'Subject: {}\n{}'.format(subject,body)
     server.sendmail('Robert.M.Handzel@gmail.com',to,message)
+    
+def gmail_sent_notification(server, notification):
+    subject = 'Endocrine Surgery Evaluation Sent' #adds subject
+    body = notification #adds body
+    print(body)
+    message = 'Subject: {}\n{}'.format(subject,body)
+    server.sendmail('Robert.M.Handzel@gmail.com','handzelrm@upmc.edu',message)
 
 def get_pgy1(path,file,sheet,send):
     df = pd.read_excel(path+file, sheetname=sheet,skiprows=3)
@@ -130,6 +144,7 @@ def get_pgy1(path,file,sheet,send):
     print('pgy1:',end='\t')
     if df_endo.shape[0] == 0:
         print('No matches')
+        resident = None
     elif df_endo.shape[0] == 1:
         resident = df_endo['PGY 1 Interns'].values[0]
         email = get_email(path,resident)
@@ -141,11 +156,13 @@ def get_pgy1(path,file,sheet,send):
         elif send == 'linux':
             print('sending out gmail emails...')
             server = createGmailServer()
-            sendGmail(server=server,to='handzelrm@upmc.edu')           
+            sendGmail(server=server,to=email)           
         else:
             print('\t\tno emails sent')
     else:
         print('More than one match')
+    
+    return resident
 
 def get_pgy2(path,file,sheet,send):
     df = pd.read_excel(path+file,sheetname=sheet,skiprows=3)
@@ -169,6 +186,7 @@ def get_pgy2(path,file,sheet,send):
     print('pgy2:',end='\t')
     if df_endo.shape[0] == 0:
         print('No matches')
+        resident = None
     elif df_endo.shape[0] == 1:
         resident = df_endo.NAME.values[0]
         email = get_email(path,resident)
@@ -180,11 +198,13 @@ def get_pgy2(path,file,sheet,send):
         elif send == 'linux':
             print('sending out gmail emails...')
             server = createGmailServer()
-            sendGmail(server=server,to='handzelrm@upmc.edu')         
+            sendGmail(server=server,to=email)         
         else:
             print('\t\tno emails sent')
     else:
         print('More than one match')
+    
+    return resident
 
 def get_pgy5(path,file,sheet,send):
     df = pd.read_excel(path+file,sheetname=sheet,skiprows=19)
@@ -208,6 +228,7 @@ def get_pgy5(path,file,sheet,send):
     print('pgy5:',end='\t')
     if df_endo.shape[0] == 0:
         print('No matches')
+        resident = None
     elif df_endo.shape[0] == 1:
         resident = df_endo.RESIDENT.values[0]
         email = get_email(path,resident)
@@ -219,11 +240,13 @@ def get_pgy5(path,file,sheet,send):
         elif send == 'linux':
             print('sending out gmail emails...')
             server = createGmailServer()
-            sendGmail(server=server,to='handzelrm@upmc.edu')         
+            sendGmail(server=server,to=email)         
         else:
             print('\t\tno emails sent')
     else:
         print('More than one match')
+        
+    return resident
 
 def get_email(path,resident):
     #path = 'S:/evals/'
@@ -245,15 +268,30 @@ if send == 'windows':
 elif send == 'linux':
     path = linux_path
 else:
-    path = windows_path #testing
+    path = windows_path
 
 
 load_and_pickle_res(path,'Master Spreadsheet.xlsx',sheet='Admin')
-#note i deleted uncovered from column a for logic to prevent hardcoding
-
-get_pgy1(path=path,file='gen_surg_schedule.xls',sheet='PGY 1',send=send)
-get_pgy2(path=path,file='gen_surg_schedule.xls',sheet='PGY 2',send=send)
-get_pgy5(path=path,file='gen_surg_schedule.xls',sheet='PGY 4 & 5',send=send)
+#note i deleted uncovered from column a for logic to prevent hardcoding	
 
 
-# check_if_notified('S:\\resident\\','resident_endocrine_dates.xlsx')
+with open(path+'sent_last_week.pickle','rb') as f:
+	sent_last_week = pickle.load(f)
+	
+if sent_last_week == False:
+    pgy1 = get_pgy1(path=path,file='gen_surg_schedule.xls',sheet='PGY 1',send=send)
+    pgy2 = get_pgy2(path=path,file='gen_surg_schedule.xls',sheet='PGY 2',send=send)
+    pgy5 = get_pgy5(path=path,file='gen_surg_schedule.xls',sheet='PGY 4 & 5',send=send)
+
+    server = createGmailServer()
+    gmail_sent_notification	(server=server,notification='{}\n{}\n{}'.format(pgy1,pgy2,pgy5))
+	
+    sent_last_week = True
+    with open(path+'sent_last_week.pickle','wb') as f:
+	    pickle.dump(sent_last_week,f)
+
+else:
+    sent_last_week = False
+    with open(path+'sent_last_week.pickle','wb') as f:
+        pickle.dump(sent_last_week,f)		
+
