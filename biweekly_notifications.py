@@ -3,7 +3,7 @@ import numpy as np
 import pickle
 from datetime import datetime
 from datetime import timedelta
-import win32com.client as win32 #used to use local outlook program to send email
+#import win32com.client as win32 #used to use local outlook program to send email
 import smtplib #used to send emails from gmail
 
 class Staff(object):
@@ -102,7 +102,7 @@ def createGmailServer():
 
 def sendGmail(server,to):
     subject = 'Endocrine Surgery Evaluation Reminder' #adds subject
-    body = 'Hi,\n\nThis is a reminder to ask the attendings to fill out surgical evaluations after thyroidectomies and parathyroidectomies. Here are the links to the evals for your reference:\nThyroid: https://docs.google.com/forms/d/e/1FAIpQLScIJrSzFypVAivYRElGbVBssIpYwQAgzyCP9C4Bk5vOhgIBIw/viewform\nParathyroid: https://docs.google.com/forms/d/e/1FAIpQLSeZA7J6q5AneCX-8suob7omhPMRes82nIi3aA1IanKmKoYURg/viewform\n\nIf you need access to your evaluations please send me a gmail address that can be linked. Let me know if you have any questions or issues\n\nThanks,\nRob' #adds body
+    body = 'Hi,\n\nThis is a reminder to ask the attendings to fill out surgical evaluations after thyroidectomies and parathyroidectomies. Here are the links to the evals for your reference:\n\nThyroid: https://docs.google.com/forms/d/e/1FAIpQLScIJrSzFypVAivYRElGbVBssIpYwQAgzyCP9C4Bk5vOhgIBIw/viewform\n\nParathyroid: https://docs.google.com/forms/d/e/1FAIpQLSeZA7J6q5AneCX-8suob7omhPMRes82nIi3aA1IanKmKoYURg/viewform\n\nIf you need access to your evaluations please send me a gmail address that I can send them to. Let me know if you have any questions or issues\n\nThanks,\nRob' #adds body
     message = 'Subject: {}\n{}'.format(subject,body)
     server.sendmail('Robert.M.Handzel@gmail.com',to,message)
 
@@ -132,7 +132,7 @@ def get_pgy1(path,file,sheet,send):
         print('No matches')
     elif df_endo.shape[0] == 1:
         resident = df_endo['PGY 1 Interns'].values[0]
-        email = get_email(resident)
+        email = get_email(path,resident)
         print(resident)
         print('\t\tEmail:{}'.format(email))
         if send == 'windows':
@@ -171,7 +171,7 @@ def get_pgy2(path,file,sheet,send):
         print('No matches')
     elif df_endo.shape[0] == 1:
         resident = df_endo.NAME.values[0]
-        email = get_email(resident)
+        email = get_email(path,resident)
         print(resident)
         print('\t\tEmail:{}'.format(email))
         if send == 'windows':
@@ -210,7 +210,7 @@ def get_pgy5(path,file,sheet,send):
         print('No matches')
     elif df_endo.shape[0] == 1:
         resident = df_endo.RESIDENT.values[0]
-        email = get_email(resident)
+        email = get_email(path,resident)
         print(resident)
         print('\t\tEmail:{}'.format(email))
         if send == 'windows':
@@ -225,8 +225,8 @@ def get_pgy5(path,file,sheet,send):
     else:
         print('More than one match')
 
-def get_email(resident):
-    path = 'S:/evals/'
+def get_email(path,resident):
+    #path = 'S:/evals/'
     file = 'res_dict.pickle'
     lname = resident.split(',')[0]
     with open(path+file,'rb') as f:
@@ -238,12 +238,12 @@ windows_path = 'S:/evals/'
 linux_path = '/home/pi/Documents/python/'
 
 
-send=False
+send='linux'
 
 if send == 'windows':
     path = windows_path
 elif send == 'linux':
-    path = 'linux_path'
+    path = linux_path
 else:
     path = windows_path #testing
 
